@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kalkulator Glovo</title>
+    <title>Kalkulator Glovo - Zielona Góra</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         :root {
@@ -28,158 +28,175 @@
             display: flex;
             justify-content: center;
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        .container { 
-            width: 100%;
-            max-width: 420px; 
-            background: var(--card-bg); 
-            border-radius: 20px; 
-            padding: 24px; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.4); 
-            border: 1px solid var(--border);
-            align-self: flex-start;
-            margin-top: 20px;
-        }
-
-        /* Tabs */
-        .tabs { 
-            display: flex; 
+        /* --- HAMBURGER MENU --- */
+        .menu-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+            cursor: pointer;
             background: var(--input-bg);
-            padding: 5px;
+            padding: 12px;
             border-radius: 12px;
-            margin-bottom: 25px; 
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
         }
-        .tab { 
-            flex: 1; 
-            padding: 12px; 
-            text-align: center; 
-            cursor: pointer; 
-            color: var(--text-dim); 
-            font-weight: 700;
-            font-size: 0.85em;
-            border-radius: 8px;
+        .menu-btn span {
+            display: block;
+            width: 25px;
+            height: 3px;
+            background: var(--accent-yellow);
+            border-radius: 3px;
             transition: var(--transition);
-            letter-spacing: 1px;
         }
-        .tab.active { 
+        .menu-btn.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+        .menu-btn.open span:nth-child(2) { opacity: 0; }
+        .menu-btn.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            position: fixed;
+            top: 0; right: -100%;
+            width: 320px; height: 100%;
             background: var(--card-bg);
-            color: var(--accent-yellow); 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-
-        .content { 
-            display: none; 
-            animation: fadeInSlide 0.4s ease-out;
-        }
-        .content.active { display: block; }
-        @keyframes fadeInSlide {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Sekcja OCR */
-        .ocr-box {
-            background: rgba(41, 121, 255, 0.05);
-            border: 2px dashed var(--accent-blue);
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-            margin-bottom: 25px;
+            z-index: 1000;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
             transition: var(--transition);
+            padding: 80px 20px 20px;
+            overflow-y: auto;
+            box-sizing: border-box;
         }
-        .ocr-status {
-            font-size: 0.85em;
-            margin-top: 10px;
-            color: var(--accent-blue);
-            font-weight: bold;
-            min-height: 1.2em;
+        .sidebar.open { right: 0; }
+        
+        .side-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .side-tab { 
+            flex: 1; padding: 8px; text-align: center; 
+            background: var(--input-bg); border-radius: 8px; 
+            font-size: 0.75rem; font-weight: bold; cursor: pointer;
+        }
+        .side-tab.active { background: var(--accent-yellow); color: black; }
+
+        /* --- HISTORY STYLES --- */
+        .hist-item {
+            background: var(--input-bg);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 3px solid var(--accent-blue);
+            cursor: pointer;
+        }
+        .hist-item.kaganiec { border-left-color: var(--accent-green); }
+        .hist-header { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; }
+        .hist-main { font-weight: bold; font-size: 1rem; color: white; }
+        .hist-details { 
+            display: none; margin-top: 10px; padding-top: 10px; 
+            border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-dim); 
+        }
+        .hist-details.open { display: block; }
+        .clear-btn { font-size: 0.7rem; color: #ff5252; cursor: pointer; text-align: right; margin-bottom: 10px; }
+
+        /* --- FAQ STYLES --- */
+        .faq-item { margin-bottom: 15px; }
+        .faq-q { color: var(--accent-yellow); font-weight: bold; font-size: 0.9rem; margin-bottom: 4px; }
+        .faq-a { font-size: 0.85rem; color: var(--text-dim); line-height: 1.4; }
+
+        /* --- POP-UP MODAL --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 10000;
+        }
+        .modal-card {
+            background: var(--card-bg); padding: 30px; border-radius: 24px;
+            max-width: 340px; width: 85%; text-align: center;
+            border: 1px solid var(--border); transform: scale(0.9);
+            animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes modalPop { to { transform: scale(1); } }
+        
+        /* --- MAIN CONTAINER --- */
+        .container { 
+            width: 100%; max-width: 420px; background: var(--card-bg); 
+            border-radius: 20px; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.4); 
+            border: 1px solid var(--border); align-self: flex-start; margin-top: 60px;
         }
 
-        h2 { 
-            font-size: 1.1em; 
-            margin-bottom: 20px; 
-            font-weight: 800;
-            text-align: center;
-            color: var(--accent-yellow);
-            text-transform: uppercase;
+        .tabs { display: flex; background: var(--input-bg); padding: 5px; border-radius: 12px; margin-bottom: 25px; }
+        .tab { 
+            flex: 1; padding: 12px; text-align: center; cursor: pointer; color: var(--text-dim); 
+            font-weight: 700; font-size: 0.85em; border-radius: 8px; transition: var(--transition);
         }
+        .tab.active { background: var(--card-bg); color: var(--accent-yellow); }
 
+        .content { display: none; animation: fadeInSlide 0.4s ease-out; }
+        .content.active { display: block; }
+        @keyframes fadeInSlide { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
+
+        .ocr-box { background: rgba(41, 121, 255, 0.05); border: 2px dashed var(--accent-blue); border-radius: 15px; padding: 20px; text-align: center; margin-bottom: 25px; }
+        h2 { font-size: 1.1em; margin-bottom: 20px; font-weight: 800; text-align: center; color: var(--accent-yellow); text-transform: uppercase; }
         .input-group { margin-bottom: 16px; }
         .row { display: flex; gap: 12px; }
         .row .input-group { flex: 1; }
-
-        label { 
-            display: block; 
-            font-size: 0.7rem; 
-            color: var(--text-dim); 
-            margin-bottom: 6px; 
-            margin-left: 4px;
-            text-transform: uppercase;
-            font-weight: 600;
-        }
-
-        input { 
-            width: 100%; 
-            padding: 14px; 
-            border: 2px solid transparent; 
-            border-radius: 12px; 
-            background: var(--input-bg); 
-            color: white; 
-            box-sizing: border-box; 
-            font-size: 16px; 
-            outline: none; 
-            transition: var(--transition);
-        }
-        input:focus { border-color: var(--accent-yellow); background: #2a2f3d; }
-
-        button { 
-            width: 100%; 
-            padding: 16px; 
-            border: none; 
-            border-radius: 12px; 
-            font-weight: 800; 
-            cursor: pointer; 
-            font-size: 0.9em; 
-            transition: var(--transition);
-            text-transform: uppercase;
-        }
-        button:active { transform: scale(0.96); }
-
-        .btn-yellow { background: var(--accent-yellow); color: #000; margin-top: 10px; }
-        .btn-green { background: var(--accent-green); color: white; margin-top: 10px; }
+        label { display: block; font-size: 0.7rem; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; font-weight: 600; }
+        input { width: 100%; padding: 14px; border: 2px solid transparent; border-radius: 12px; background: var(--input-bg); color: white; box-sizing: border-box; font-size: 16px; outline: none; }
+        input:focus { border-color: var(--accent-yellow); }
+        button { width: 100%; padding: 16px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; text-transform: uppercase; transition: var(--transition); }
+        .btn-yellow { background: var(--accent-yellow); color: #000; }
+        .btn-green { background: var(--accent-green); color: white; }
         .btn-blue { background: var(--accent-blue); color: white; margin-top: 15px; }
-        .btn-outline { background: transparent; border: 2px solid var(--accent-blue); color: var(--accent-blue); padding: 10px; }
-
-        .result-card { 
-            background: #252936; 
-            padding: 18px; 
-            border-radius: 14px; 
-            margin-top: 20px; 
-            border-left: 4px solid var(--accent-yellow);
-            animation: slideIn 0.3s ease-out;
-        }
-        @keyframes slideIn { from { transform: scale(0.95); opacity: 0; } }
-
-        .winien-box { border-left-color: var(--accent-green); background: rgba(0, 200, 83, 0.05); }
-        .val { font-size: 1.7em; font-weight: 900; color: var(--accent-yellow); display: block; margin-top: 4px; }
-        .winien-val { color: var(--accent-green); }
-
-        .support-msg { 
-            background: #000; 
-            padding: 12px; 
-            border-radius: 8px; 
-            font-size: 0.85em; 
-            margin-top: 15px; 
-            color: #ccc; 
-            border: 1px solid #333; 
-            white-space: pre-wrap;
-            line-height: 1.4;
-        }
-        .copy-btn { background: #334155; color: white; padding: 10px; font-size: 0.8em; margin-top: 10px; cursor: pointer; border-radius: 8px; width: auto; text-transform: none; }
+        .result-card { background: #252936; padding: 18px; border-radius: 14px; margin-top: 20px; border-left: 4px solid var(--accent-yellow); }
+        .val { font-size: 1.7em; font-weight: 900; color: var(--accent-yellow); display: block; }
+        .support-msg { background: #000; padding: 12px; border-radius: 8px; font-size: 0.85em; margin-top: 15px; color: #ccc; border: 1px solid #333; white-space: pre-wrap; }
+        .copy-btn { background: #334155; color: white; padding: 10px; font-size: 0.8em; margin-top: 10px; border-radius: 8px; width: auto; }
     </style>
 </head>
 <body>
+
+<div class="menu-btn" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+</div>
+
+<div id="sidebar" class="sidebar">
+    <div class="side-tabs">
+        <div id="stab-hist" class="side-tab active" onclick="openSideTab('history-view', 'stab-hist')">HISTORIA</div>
+        <div id="stab-faq" class="side-tab" onclick="openSideTab('faq-view', 'stab-faq')">FAQ</div>
+    </div>
+
+    <div id="history-view">
+        <div class="clear-btn" onclick="clearHistory()">Wyczyść wszystko</div>
+        <div id="history-list">
+            </div>
+    </div>
+
+    <div id="faq-view" style="display:none">
+        <div class="faq-item">
+            <div class="faq-q">Dlaczego limit to 12km?</div>
+            <div class="faq-a">Glovo w Zielonej Górze (i większości miast) automatycznie "ucina" stawkę powyżej 12km dystansu całkowitego. Każdy km powyżej jest darmowy, chyba że poprosisz o korektę.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-q">Jak uzyskać korektę?</div>
+            <div class="faq-a">Skopiuj wygenerowaną treść z zakładki KAGANIEC i wyślij ją przez czat wsparcia w Blokady i Obciążenia.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-q">Co to "Mnożnik Ukryty"?</div>
+            <div class="faq-a">To mnożnik podstawowy strefy, który nie zawsze jest widoczny bezpośrednio, ale wynika z kwoty bazowej.</div>
+        </div>
+    </div>
+</div>
+
+<div id="welcome-modal" class="modal-overlay">
+    <div class="modal-card">
+        <h2 style="margin-top:0">Zielona Góra</h2>
+        <p>Kalkulator stworzony dla kurierów z ZG. <br>Pamiętaj o limitach!</p>
+        <button class="btn-yellow" onclick="closeModal()">Rozumiem</button>
+    </div>
+</div>
 
 <div class="container">
     <div class="tabs">
@@ -190,73 +207,43 @@
     <div id="mnoznik-tab" class="content active">
         <div class="ocr-box">
             <input type="file" id="ocr_file" accept="image/*" style="display: none;" onchange="handleOCR(this)">
-            <button class="btn-outline" onclick="document.getElementById('ocr_file').click()">📸 SKANUJ SCREENA</button>
-            <div id="ocr_status" class="ocr-status">Czekam na plik...</div>
+            <button style="background:transparent; border:1px solid var(--accent-blue); color:var(--accent-blue); padding:10px" onclick="document.getElementById('ocr_file').click()">📸 SKANUJ SCREENA</button>
+            <div id="ocr_status" style="font-size:0.7rem; margin-top:5px; color:var(--accent-blue)">Czekam na plik...</div>
         </div>
-
-        <h2>Wylicz mnożnik</h2>
-        
         <div class="input-group">
             <label>Kwota zlecenia (zł)</label>
-            <input type="number" id="m_kwota" step="0.01" placeholder="np. 10.84">
+            <input type="number" id="m_kwota" step="0.01">
         </div>
         <div class="input-group">
             <label>Mnożnik ogień (Y)</label>
             <input type="number" id="m_ogien" step="0.01" value="1.00">
         </div>
         <div class="row">
-            <div class="input-group">
-                <label>Dystans do A (km)</label>
-                <input type="number" id="m_distA" step="0.01" placeholder="A">
-            </div>
-            <div class="input-group">
-                <label>Dystans do B (km)</label>
-                <input type="number" id="m_distB" step="0.01" placeholder="B">
-            </div>
+            <div class="input-group"><label>Dystans A (km)</label><input type="number" id="m_distA" step="0.01"></div>
+            <div class="input-group"><label>Dystans B (km)</label><input type="number" id="m_distB" step="0.01"></div>
         </div>
-        <button class="btn-yellow" onclick="calcMnoznik()">OBLICZ MNOŻNIK</button>
-        
+        <button class="btn-yellow" onclick="calcMnoznik()">OBLICZ I ZAPISZ</button>
         <div id="res_mnoznik" class="result-card" style="display:none">
-            <span style="font-size: 0.8em; color: var(--text-dim);">MNOŻNIK GLOVO:</span>
+            <span style="font-size: 0.8em;">WYNIK:</span>
             <span class="val" id="val_mnoznik">0.00</span>
             <button id="btn_transfer" class="btn-blue" onclick="transferToKorekta()">➜ PRZENIEŚ DO KOREKTY</button>
         </div>
     </div>
 
     <div id="kaganiec-tab" class="content">
-        <h2>Kalkulator 12km+</h2>
         <div class="row">
-            <div class="input-group">
-                <label>Dystans do A (km)</label>
-                <input type="number" id="k_distA" step="0.01">
-            </div>
-            <div class="input-group">
-                <label>Dystans do B (km)</label>
-                <input type="number" id="k_distB" step="0.01">
-            </div>
+            <div class="input-group"><label>Dystans A</label><input type="number" id="k_distA" step="0.01"></div>
+            <div class="input-group"><label>Dystans B</label><input type="number" id="k_distB" step="0.01"></div>
         </div>
         <div class="row">
-            <div class="input-group">
-                <label>Mnożnik ukryty</label>
-                <input type="number" id="k_mnoznik" step="0.01">
-            </div>
-            <div class="input-group">
-                <label>Mnożnik ogień (Y)</label>
-                <input type="number" id="k_ogien" step="0.01">
-            </div>
+            <div class="input-group"><label>Mnożnik ukryty</label><input type="number" id="k_mnoznik" step="0.01"></div>
+            <div class="input-group"><label>Mnożnik ogień</label><input type="number" id="k_ogien" step="0.01"></div>
         </div>
-        <div class="input-group">
-            <label>ID Zamówienia</label>
-            <input type="text" id="k_id" placeholder="#12345678">
-        </div>
-        
+        <div class="input-group"><label>ID Zamówienia</label><input type="text" id="k_id" placeholder="#123..."></div>
         <button class="btn-green" onclick="calcKaganiec()">OBLICZ KOREKTĘ</button>
-
-        <div id="res_kaganiec" class="result-card winien-box" style="display:none">
-            <div style="font-size: 0.9em; margin-bottom: 5px;">Dystans: <b id="val_total_dist">0</b> km (Limit 12)</div>
-            <span style="font-size: 0.8em; color: var(--text-dim);">DO ODZYSKANIA:</span>
-            <span class="val winien-val" id="val_roznica">0.00 zł</span>
-            
+        <div id="res_kaganiec" class="result-card" style="display:none; border-left-color: var(--accent-green);">
+            <span style="font-size: 0.8em;">DO ODZYSKANIA:</span>
+            <span class="val" id="val_roznica" style="color:var(--accent-green)">0.00 zł</span>
             <div class="support-msg" id="msg_text"></div>
             <button class="copy-btn" onclick="copyMsg()">📋 KOPIUJ TREŚĆ</button>
         </div>
@@ -264,94 +251,94 @@
 </div>
 
 <script>
-    const LIMIT_KM = 12.00;
+    // --- STORAGE & MENU ---
+    let history = JSON.parse(localStorage.getItem('glovo_hist')) || [];
 
-    // --- FUNKCJA OCR ---
-    async function handleOCR(input) {
-        if (!input.files || !input.files[0]) return;
-        const status = document.getElementById('ocr_status');
-        status.innerText = "⏳ Inicjalizacja silnika...";
-        status.style.color = "var(--accent-blue)";
+    function toggleMenu() {
+        document.querySelector('.menu-btn').classList.toggle('open');
+        document.getElementById('sidebar').classList.toggle('open');
+        renderHistory();
+    }
+
+    function openSideTab(viewId, tabId) {
+        document.getElementById('history-view').style.display = 'none';
+        document.getElementById('faq-view').style.display = 'none';
+        document.getElementById(viewId).style.display = 'block';
+        document.querySelectorAll('.side-tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    function saveToHistory(type, data) {
+        const entry = {
+            id: Date.now(),
+            date: new Date().toLocaleString('pl-PL', {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit'}),
+            type: type,
+            ...data
+        };
+        history.unshift(entry);
+        if(history.length > 20) history.pop();
+        localStorage.setItem('glovo_hist', JSON.stringify(history));
+    }
+
+    function renderHistory() {
+        const list = document.getElementById('history-list');
+        list.innerHTML = history.length === 0 ? '<div style="text-align:center; color:gray; margin-top:20px">Brak historii</div>' : '';
         
-        try {
-            const worker = await Tesseract.createWorker('pol');
-            
-            // Konfiguracja dla lepszej precyzji liczb
-            await worker.setParameters({
-                tessedit_char_whitelist: '0123456789.,złkm ',
-            });
+        history.forEach(item => {
+            const div = document.createElement('div');
+            div.className = `hist-item ${item.type === 'kaganiec' ? 'kaganiec' : ''}`;
+            div.onclick = (e) => {
+                const details = div.querySelector('.hist-details');
+                details.classList.toggle('open');
+            };
 
-            status.innerText = "🔎 Skanowanie obrazu...";
-            const result = await worker.recognize(input.files[0]);
-            const lines = result.data.lines;
-            
-            let foundAmount = null;
-            let distances = [];
+            const title = item.type === 'mnoznik' ? 'Obliczenie Mnożnika' : `Korekta ${item.orderId || ''}`;
+            const result = item.type === 'mnoznik' ? `M: ${item.res}` : `+${item.res} zł`;
 
-            lines.forEach(line => {
-                const text = line.text.toLowerCase().replace(',', '.');
-                
-                // Szukanie kwoty (np. "10.84 zł")
-                const priceMatch = text.match(/(\d+[\.\,]\d{2})/);
-                if (priceMatch && (text.includes('zł') || text.includes('z'))) {
-                    if(!foundAmount) foundAmount = priceMatch[1];
-                }
+            div.innerHTML = `
+                <div class="hist-header"><span>${item.date}</span><span>${item.type.toUpperCase()}</span></div>
+                <div class="hist-main">${result}</div>
+                <div style="font-size:0.75rem; color:var(--accent-yellow)">${title}</div>
+                <div class="hist-details">
+                    ${item.distA ? `Dystans A: ${item.distA} km<br>` : ''}
+                    ${item.distB ? `Dystans B: ${item.distB} km<br>` : ''}
+                    ${item.kwota ? `Kwota: ${item.kwota} zł<br>` : ''}
+                    Mnożnik ogień: ${item.ogien}x
+                </div>
+            `;
+            list.appendChild(div);
+        });
+    }
 
-                // Szukanie dystansów (linie zawierające "km")
-                const distMatch = text.match(/(\d+[\.\,]\d{1,2})/);
-                if (distMatch && text.includes('km')) {
-                    distances.push(distMatch[1]);
-                }
-            });
-
-            if (foundAmount) document.getElementById('m_kwota').value = foundAmount.replace(',', '.');
-            if (distances.length >= 1) document.getElementById('m_distA').value = distances[0].replace(',', '.');
-            if (distances.length >= 2) document.getElementById('m_distB').value = distances[1].replace(',', '.');
-
-            await worker.terminate();
-            status.innerText = "✅ Gotowe!";
-            status.style.color = "var(--accent-green)";
-        } catch (e) {
-            status.innerText = "❌ Błąd skanowania";
-            console.error(e);
+    function clearHistory() {
+        if(confirm('Czy wyczyścić całą historię?')) {
+            history = [];
+            localStorage.setItem('glovo_hist', JSON.stringify(history));
+            renderHistory();
         }
     }
 
-    // --- LOGIKA APLIKACJI ---
-    function openTab(tabName, tabId) {
-        document.querySelectorAll(".content").forEach(c => { c.style.display = "none"; c.classList.remove("active"); });
-        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-        const act = document.getElementById(tabName);
-        act.style.display = "block";
-        setTimeout(() => act.classList.add("active"), 10);
-        document.getElementById(tabId).classList.add("active");
-    }
+    // --- LOGIKA KALKULATORA ---
+    const LIMIT_KM = 12.00;
+    const BAZA = 3.50;
 
     function calcMnoznik() {
         const x = parseFloat(document.getElementById('m_kwota').value);
         const y = parseFloat(document.getElementById('m_ogien').value) || 1;
         const dA = parseFloat(document.getElementById('m_distA').value) || 0;
         const dB = parseFloat(document.getElementById('m_distB').value) || 0;
+        if(!x) return alert("Podaj kwotę!");
+
         const total = dA + dB;
-        const baza = 3.50;
-
-        if(!x) { alert("Wpisz kwotę!"); return; }
-
         const distDoObliczen = Math.min(total, LIMIT_KM);
-        const mnoznikResult = (x / y) / (baza + distDoObliczen);
-        
-        document.getElementById('val_mnoznik').innerText = mnoznikResult.toFixed(2);
+        const res = (x / y) / (BAZA + distDoObliczen);
+        const resFixed = res.toFixed(2);
+
+        document.getElementById('val_mnoznik').innerText = resFixed;
         document.getElementById('res_mnoznik').style.display = 'block';
         document.getElementById('btn_transfer').style.display = total > LIMIT_KM ? 'block' : 'none';
-    }
 
-    function transferToKorekta() {
-        document.getElementById('k_distA').value = document.getElementById('m_distA').value;
-        document.getElementById('k_distB').value = document.getElementById('m_distB').value;
-        document.getElementById('k_mnoznik').value = document.getElementById('val_mnoznik').innerText;
-        document.getElementById('k_ogien').value = document.getElementById('m_ogien').value;
-        openTab('kaganiec-tab', 'tab-k');
-        calcKaganiec();
+        saveToHistory('mnoznik', { kwota: x, ogien: y, distA: dA, distB: dB, res: resFixed });
     }
 
     function calcKaganiec() {
@@ -359,37 +346,64 @@
         const dB = parseFloat(document.getElementById('k_distB').value) || 0;
         const m = parseFloat(document.getElementById('k_mnoznik').value) || 1;
         const o = parseFloat(document.getElementById('k_ogien').value) || 1;
-        const orderId = document.getElementById('k_id').value || "[ID]";
+        const orderId = document.getElementById('k_id').value || "#BRAK";
         
         const total = dA + dB;
-        const baza = 3.50;
+        if(total <= LIMIT_KM) return alert("Dystans poniżej 12km!");
 
-        if(total <= LIMIT_KM) {
-            alert(`Suma km (${total.toFixed(2)}) nie przekracza limitu ${LIMIT_KM}km.`);
-            return;
-        }
+        const roznica = ((BAZA + total) * m * o) - ((BAZA + LIMIT_KM) * m * o);
+        const resFixed = roznica.toFixed(2);
 
-        const prawidlowa = (baza + total) * m * o;
-        const kaganiec = (baza + LIMIT_KM) * m * o;
-        const roznica = prawidlowa - kaganiec;
-
-        document.getElementById('val_total_dist').innerText = total.toFixed(2);
-        document.getElementById('val_roznica').innerText = roznica.toFixed(2) + " zł";
-        
-        const msg = `Dzień dobry, proszę o korektę zarobków dla zamówienia ${orderId}. Łączny dystans (A+B) wyniósł ${total.toFixed(2)} km (A: ${dA} km, B: ${dB} km). System naliczył stawkę tylko do limitu ${LIMIT_KM} km. Proszę o wyrównanie niedopłaty w wysokości ${roznica.toFixed(2)} zł. Pozdrawiam.`;
-        
+        document.getElementById('val_roznica').innerText = resFixed + " zł";
+        const msg = `Korekta ${orderId}. Łącznie ${total.toFixed(2)} km (A: ${dA}, B: ${dB}). Naliczyło tylko do 12km. Proszę o dopłatę ${resFixed} zł.`;
         document.getElementById('msg_text').innerText = msg;
         document.getElementById('res_kaganiec').style.display = 'block';
+
+        saveToHistory('kaganiec', { orderId: orderId, ogien: o, m: m, distA: dA, distB: dB, res: resFixed });
     }
 
+    // --- RESZTA FUNKCJI ---
+    function closeModal() { document.getElementById('welcome-modal').style.display = 'none'; }
+    function openTab(name, tid) {
+        document.querySelectorAll(".content").forEach(c => c.style.display = "none");
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        document.getElementById(name).style.display = "block";
+        document.getElementById(tid).classList.add("active");
+    }
+    function transferToKorekta() {
+        document.getElementById('k_distA').value = document.getElementById('m_distA').value;
+        document.getElementById('k_distB').value = document.getElementById('m_distB').value;
+        document.getElementById('k_mnoznik').value = document.getElementById('val_mnoznik').innerText;
+        document.getElementById('k_ogien').value = document.getElementById('m_ogien').value;
+        openTab('kaganiec-tab', 'tab-k');
+    }
     function copyMsg() {
-        const text = document.getElementById('msg_text').innerText;
-        navigator.clipboard.writeText(text).then(() => {
-            const btn = document.querySelector('.copy-btn');
-            btn.innerText = "✅ SKOPIOWANO!";
-            btn.style.background = "var(--accent-green)";
-            setTimeout(() => { btn.innerText = "📋 KOPIUJ TREŚĆ"; btn.style.background = "#334155"; }, 2000);
-        });
+        navigator.clipboard.writeText(document.getElementById('msg_text').innerText);
+        alert("Skopiowano!");
+    }
+
+    async function handleOCR(input) {
+        if (!input.files[0]) return;
+        const status = document.getElementById('ocr_status');
+        status.innerText = "⏳ Skanowanie...";
+        try {
+            const worker = await Tesseract.createWorker('pol');
+            await worker.setParameters({ tessedit_char_whitelist: '0123456789.,złkm ' });
+            const result = await worker.recognize(input.files[0]);
+            const lines = result.data.lines;
+            lines.forEach(line => {
+                const text = line.text.toLowerCase().replace(',', '.');
+                const priceMatch = text.match(/(\d+[\.\,]\d{2})/);
+                if (priceMatch && text.includes('zł')) document.getElementById('m_kwota').value = priceMatch[1];
+                const distMatch = text.match(/(\d+[\.\,]\d{1,2})/);
+                if (distMatch && text.includes('km')) {
+                    if(!document.getElementById('m_distA').value) document.getElementById('m_distA').value = distMatch[1];
+                    else document.getElementById('m_distB').value = distMatch[1];
+                }
+            });
+            await worker.terminate();
+            status.innerText = "✅ Gotowe!";
+        } catch (e) { status.innerText = "❌ Błąd"; }
     }
 </script>
 </body>
