@@ -3,122 +3,435 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Strona w trakcie prac</title>
+    <title>Glovo Calc ZG | Mnożnik & Kaganiec 12/6km</title>
+    <meta name="description" content="Niezbędnik kuriera Glovo w Zielonej Górze. Wylicz mnożnik i generuj wnioski o korektę (nowy limit 6km na odcinek).">
+    <meta name="theme-color" content="#0b0f19">
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #131b2e;
+            --accent-yellow: #f59e0b;
+            --accent-yellow-glow: rgba(245, 158, 11, 0.2);
+            --accent-green: #10b981;
+            --accent-green-glow: rgba(16, 185, 129, 0.2);
+            --accent-blue: #3b82f6;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --input-bg: #1e293b;
+            --border: #334155;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: #333;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        /* Kontener karty */
-        .card {
-            background: #ffffff;
-            padding: 50px 40px;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            text-align: center;
-            max-width: 500px;
-            width: 100%;
-            animation: fadeIn 1s ease-in-out;
-        }
-
-        /* Animacja wejścia */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Ikona / Grafika zastępcza */
-        .icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-            display: inline-block;
-            animation: bounce 2s infinite;
-        }
-
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {
-                transform: translateY(0);
-            }
-            40% {
-                transform: translateY(-10px);
-            }
-            60% {
-                transform: translateY(-5px);
-            }
-        }
-
-        /* Nagłówek */
-        h1 {
-            font-size: 26px;
-            color: #1e3c72;
-            margin-bottom: 15px;
-            font-weight: 700;
-        }
-
-        /* Tekst opisowy */
-        p {
-            font-size: 16px;
-            color: #666;
-            line-height: 1.6;
-            margin-bottom: 30px;
-        }
-
-        /* Pasek postępu */
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background-color: #e0e0e0;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
-
-        .progress-fill {
-            width: 65%; 
-            height: 100%;
-            background: linear-gradient(90deg, #1e3c72, #2a5298);
-            border-radius: 4px;
-        }
-
         
-        .footer-text {
-            font-size: 13px;
-            color: #999;
+        * { box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 15px; 
+            display: flex; 
+            justify-content: center; 
+            min-height: 100vh; 
+            overflow-x: hidden; 
         }
+        
+        /* --- MENU & SIDEBAR --- */
+        .menu-btn { 
+            position: fixed; 
+            top: 20px; 
+            right: 20px; 
+            z-index: 1001; 
+            cursor: pointer; 
+            background: var(--card-bg); 
+            padding: 12px; 
+            border-radius: 14px; 
+            border: 1px solid var(--border); 
+            display: flex; 
+            flex-direction: column; 
+            gap: 5px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: var(--transition);
+        }
+        .menu-btn:hover { border-color: var(--accent-yellow); }
+        .menu-btn span { display: block; width: 24px; height: 2px; background: var(--accent-yellow); border-radius: 2px; transition: var(--transition); }
+        .menu-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .menu-btn.open span:nth-child(2) { opacity: 0; }
+        .menu-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+        
+        .sidebar { 
+            position: fixed; 
+            top: 0; 
+            right: -100%; 
+            width: 340px; 
+            height: 100%; 
+            background: var(--card-bg); 
+            z-index: 1000; 
+            box-shadow: -10px 0 40px rgba(0,0,0,0.6); 
+            transition: var(--transition); 
+            padding: 85px 20px 20px; 
+            overflow-y: auto; 
+            border-left: 1px solid var(--border);
+        }
+        .sidebar.open { right: 0; }
+        
+        .side-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+        .side-tab { flex: 1; padding: 10px; text-align: center; background: var(--input-bg); border-radius: 10px; font-size: 0.75rem; font-weight: bold; cursor: pointer; color: var(--text-dim); transition: var(--transition); border: 1px solid transparent; }
+        .side-tab.active { background: var(--accent-yellow); color: #000; border-color: var(--accent-yellow); }
+
+        /* --- MAIN CONTAINER & UI --- */
+        .container { 
+            width: 100%; 
+            max-width: 440px; 
+            background: var(--card-bg); 
+            border-radius: 24px; 
+            padding: 28px; 
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); 
+            border: 1px solid var(--border); 
+            align-self: flex-start; 
+            margin-top: 50px; 
+        }
+        
+        .tabs { display: flex; background: var(--input-bg); padding: 5px; border-radius: 14px; margin-bottom: 25px; border: 1px solid var(--border); }
+        .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; color: var(--text-dim); font-weight: 700; font-size: 0.85em; border-radius: 10px; transition: var(--transition); }
+        .tab.active { background: var(--card-bg); color: var(--accent-yellow); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        
+        .content { display: none; animation: fadeInSlide 0.3s ease-out; }
+        .content.active { display: block; }
+        @keyframes fadeInSlide { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
+        
+        .ocr-box { 
+            background: rgba(59, 130, 246, 0.05); 
+            border: 2px dashed rgba(59, 130, 246, 0.4); 
+            border-radius: 16px; 
+            padding: 16px; 
+            text-align: center; 
+            margin-bottom: 22px; 
+            transition: var(--transition);
+        }
+        .ocr-box:hover { border-color: var(--accent-blue); }
+        
+        h2 { font-size: 1.1em; margin-bottom: 20px; font-weight: 800; text-align: center; color: var(--accent-yellow); text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .input-group { margin-bottom: 16px; }
+        .row { display: flex; gap: 12px; }
+        .row .input-group { flex: 1; }
+        
+        label { display: block; font-size: 0.7rem; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
+        
+        input { 
+            width: 100%; 
+            padding: 14px; 
+            border: 2px solid var(--border); 
+            border-radius: 12px; 
+            background: var(--input-bg); 
+            color: white; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+            outline: none; 
+            transition: var(--transition); 
+        }
+        input:focus { border-color: var(--accent-yellow); box-shadow: 0 0 0 3px var(--accent-yellow-glow); }
+        
+        button { width: 100%; padding: 16px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; text-transform: uppercase; transition: var(--transition); letter-spacing: 0.5px; }
+        .btn-yellow { background: var(--accent-yellow); color: #000; box-shadow: 0 4px 14px var(--accent-yellow-glow); }
+        .btn-yellow:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-green { background: var(--accent-green); color: white; box-shadow: 0 4px 14px var(--accent-green-glow); }
+        .btn-green:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-blue { background: var(--accent-blue); color: white; margin-top: 15px; }
+        
+        .result-card { background: var(--input-bg); padding: 20px; border-radius: 16px; margin-top: 20px; border-left: 4px solid var(--accent-yellow); border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+        .val { font-size: 1.8em; font-weight: 900; color: var(--accent-yellow); display: block; margin-top: 4px; }
+        
+        .support-msg { background: #0b0f19; padding: 14px; border-radius: 10px; font-size: 0.85em; margin-top: 15px; color: #cbd5e1; border: 1px solid var(--border); white-space: pre-wrap; word-break: break-word; line-height: 1.4; }
+        .copy-btn { background: var(--border); color: white; padding: 10px; font-size: 0.8em; margin-top: 10px; border-radius: 8px; width: auto; font-weight: 600; }
+        .copy-btn:hover { background: #475569; }
+
+        /* --- PARTNER BANNER / LINKS --- */
+        .partner-box {
+            margin-top: 25px;
+            padding: 14px;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(59, 130, 246, 0.1));
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 14px;
+            text-align: center;
+        }
+        .partner-box p { margin: 0 0 8px 0; font-size: 0.75rem; color: var(--text-dim); }
+        .partner-link {
+            display: inline-block;
+            color: var(--accent-yellow);
+            font-weight: 800;
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        .partner-link:hover { text-decoration: underline; color: #fbbf24; }
+
+        /* --- HISTORY --- */
+        .hist-item { background: var(--input-bg); border-radius: 12px; padding: 12px; margin-bottom: 10px; border-left: 3px solid var(--accent-blue); border: 1px solid var(--border); }
+        .hist-header { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px; }
+        .hist-main { font-weight: 800; font-size: 0.95rem; color: white; }
+        .clear-btn { font-size: 0.75rem; color: #f87171; cursor: pointer; text-align: right; margin-bottom: 12px; font-weight: 700; }
+        .clear-btn:hover { color: #ef4444; }
+
+        /* --- FAQ --- */
+        .faq-box { font-size: 0.8rem; color: var(--accent-yellow); margin-bottom: 15px; padding: 12px; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 10px; background: rgba(245, 158, 11, 0.05); line-height: 1.4; }
+        .faq-item p { margin: 0 0 10px 0; font-size: 0.8rem; color: var(--text-dim); line-height: 1.4; }
+        .faq-item strong { color: var(--text-main); }
+
+        /* --- MODAL --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; z-index: 10000; }
+        .modal-card { background: var(--card-bg); padding: 30px; border-radius: 24px; max-width: 340px; width: 85%; text-align: center; border: 1px solid var(--border); box-shadow: 0 25px 50px rgba(0,0,0,0.7); }
+        .modal-card p { color: var(--text-dim); font-size: 0.9rem; line-height: 1.5; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <div class="icon">🚧</div>
-        <h1>Strona w trakcie prac</h1>
-        <p>Wprowadzamy dla Ciebie coś nowego i wyjątkowego. Zajrzyj do nas niebawem, wszystko będzie gotowe wkrótce!</p>
-        
-        <div class="progress-bar">
-            <div class="progress-fill"></div>
+<div class="menu-btn" onclick="toggleMenu()" title="Menu i Historia">
+    <span></span><span></span><span></span>
+</div>
+
+<div id="sidebar" class="sidebar">
+    <div class="side-tabs">
+        <div id="stab-hist" class="side-tab active" onclick="openSideTab('history-view', 'stab-hist')">HISTORIA</div>
+        <div id="stab-faq" class="side-tab" onclick="openSideTab('faq-view', 'stab-faq')">FAQ & ZASADY</div>
+    </div>
+    
+    <div id="history-view">
+        <div class="clear-btn" onclick="clearHistory()">Wyczyść wszystko</div>
+        <div id="history-list"></div>
+    </div>
+    
+    <div id="faq-view" style="display:none">
+        <div class="faq-box">
+            ⚠️ <strong>NOWE ZASADY ZG:</strong><br>Max 6 km za dojazd DO PUNKTU (A) oraz max 6 km za dojazd DO KLIENTA (B).
         </div>
-        
-        <div class="footer-text">&copy; 2026 Wszelkie prawa zastrzeżone.</div>
+        <div class="faq-item">
+            <p><strong>Jak działa kaganiec?</strong><br>Jeśli którykolwiek odcinek przekracza 6 km, system Glovo obcina stawkę. Nasze narzędzie wylicza różnicę do odzyskania.</p>
+        </div>
+        <div class="faq-item">
+            <p><strong>Więcej informacji:</strong><br>Sprawdzaj oficjalne rozliczenia i wsparcie dla kurierów na <a href="https://glovocash.pl" target="_blank" style="color: var(--accent-yellow);">glovocash.pl</a>.</p>
+        </div>
     </div>
 
+    <div class="partner-box" style="margin-top: 30px;">
+        <p>Oficjalny portal rozliczeniowy:</p>
+        <a href="https://glovocash.pl" target="_blank" class="partner-link">🌐 glovocash.pl</a>
+    </div>
+</div>
+
+<div id="welcome-modal" class="modal-overlay">
+    <div class="modal-card">
+        <h2 style="margin-top:0">Zielona Góra</h2>
+        <p>Aktualizacja systemu:<br><b>Limit 12 km</b><br>(max 6 km na każdy odcinek trasy)</p>
+        <button class="btn-yellow" onclick="closeModal()">Rozumiem</button>
+    </div>
+</div>
+
+<div class="container">
+    <div class="tabs">
+        <div id="tab-m" class="tab active" onclick="openTab('mnoznik-tab', 'tab-m')">MNOŻNIK</div>
+        <div id="tab-k" class="tab" onclick="openTab('kaganiec-tab', 'tab-k')">KAGANIEC</div>
+    </div>
+
+    <div id="mnoznik-tab" class="content active">
+        <div class="ocr-box">
+            <input type="file" id="ocr_file" accept="image/*" style="display: none;" onchange="handleOCR(this)">
+            <button style="background:transparent; border:1px solid var(--accent-blue); color:var(--accent-blue); padding:10px; font-size:0.75rem;" onclick="document.getElementById('ocr_file').click()">📸 SKANUJ SCREENA (OCR)</button>
+            <div id="ocr_status" style="font-size:0.7rem; margin-top:6px; color:var(--text-dim)">Skanuj kwotę i dystans</div>
+        </div>
+        <div class="input-group">
+            <label>Kwota zlecenia (zł)</label>
+            <input type="number" id="m_kwota" step="0.01" placeholder="0.00">
+        </div>
+        <div class="input-group">
+            <label>Mnożnik ogień (Y)</label>
+            <input type="number" id="m_ogien" step="0.01" value="1.00">
+        </div>
+        <div class="row">
+            <div class="input-group"><label>Dystans A (km)</label><input type="number" id="m_distA" step="0.01" placeholder="0.0"></div>
+            <div class="input-group"><label>Dystans B (km)</label><input type="number" id="m_distB" step="0.01" placeholder="0.0"></div>
+        </div>
+        <button class="btn-yellow" onclick="calcMnoznik()">OBLICZ I ZAPISZ</button>
+        
+        <div id="res_mnoznik" class="result-card" style="display:none">
+            <span style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">WYNIK (MNOŻNIK UKRYTY):</span>
+            <span class="val" id="val_mnoznik">0.00</span>
+            <button id="btn_transfer" class="btn-blue" onclick="transferToKorekta()" style="display:none;">➜ WYKRYTO KAGANIEC! PRZEJDŹ DO KOREKTY</button>
+        </div>
+    </div>
+
+    <div id="kaganiec-tab" class="content">
+        <div class="row">
+            <div class="input-group"><label>Dystans A</label><input type="number" id="k_distA" step="0.01" placeholder="0.0"></div>
+            <div class="input-group"><label>Dystans B</label><input type="number" id="k_distB" step="0.01" placeholder="0.0"></div>
+        </div>
+        <div class="row">
+            <div class="input-group"><label>Mnożnik ukryty</label><input type="number" id="k_mnoznik" step="0.01" placeholder="0.00"></div>
+            <div class="input-group"><label>Mnożnik ogień</label><input type="number" id="k_ogien" step="0.01" value="1.00" placeholder="1.00"></div>
+        </div>
+        <div class="input-group"><label>ID Zamówienia</label><input type="text" id="k_id" placeholder="#123..."></div>
+        <button class="btn-green" onclick="calcKaganiec()">OBLICZ DOPŁATĘ</button>
+
+        <div id="res_kaganiec" class="result-card" style="display:none; border-left-color: var(--accent-green);">
+            <span style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">DO ODZYSKANIA:</span>
+            <span class="val" id="val_roznica" style="color:var(--accent-green)">0.00 zł</span>
+            <div class="support-msg" id="msg_text"></div>
+            <button class="copy-btn" onclick="copyMsg()">📋 KOPIUJ TREŚĆ WNIOSKU</button>
+        </div>
+    </div>
+
+    <div class="partner-box">
+        <p>Potrzebujesz dodatkowych narzędzi i rozliczeń?</p>
+        <a href="https://glovocash.pl" target="_blank" class="partner-link">Przejdź do oficjalnego portalu glovocash.pl &rarr;</a>
+    </div>
+</div>
+
+<script>
+    const BAZA = 3.50;
+    const LEG_LIMIT = 6.00; 
+    let history = JSON.parse(localStorage.getItem('glovo_hist')) || [];
+
+    function toggleMenu() {
+        document.querySelector('.menu-btn').classList.toggle('open');
+        document.getElementById('sidebar').classList.toggle('open');
+        renderHistory();
+    }
+
+    function closeModal() { 
+        document.getElementById('welcome-modal').style.display = 'none'; 
+    }
+
+    function openTab(name, tid) {
+        document.querySelectorAll(".content").forEach(c => c.style.display = "none");
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        document.getElementById(name).style.display = "block";
+        document.getElementById(tid).classList.add("active");
+    }
+
+    function openSideTab(viewId, tabId) {
+        document.getElementById('history-view').style.display = 'none';
+        document.getElementById('faq-view').style.display = 'none';
+        document.getElementById(viewId).style.display = 'block';
+        document.querySelectorAll('.side-tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    function getPaidDistance(dA, dB) {
+        return Math.min(dA, LEG_LIMIT) + Math.min(dB, LEG_LIMIT);
+    }
+
+    function calcMnoznik() {
+        const x = parseFloat(document.getElementById('m_kwota').value);
+        const y = parseFloat(document.getElementById('m_ogien').value) || 1;
+        const dA = parseFloat(document.getElementById('m_distA').value) || 0;
+        const dB = parseFloat(document.getElementById('m_distB').value) || 0;
+
+        if(!x || isNaN(x)) return alert("Podaj prawidłową kwotę zlecenia!");
+
+        const paidDist = getPaidDistance(dA, dB);
+        const res = (x / y) / (BAZA + paidDist);
+        const resFixed = res.toFixed(2);
+
+        document.getElementById('val_mnoznik').innerText = resFixed;
+        document.getElementById('res_mnoznik').style.display = 'block';
+        
+        document.getElementById('btn_transfer').style.display = (dA > LEG_LIMIT || dB > LEG_LIMIT) ? 'block' : 'none';
+
+        saveToHistory('mnoznik', { kwota: x, ogien: y, distA: dA, distB: dB, res: resFixed });
+    }
+
+    function calcKaganiec() {
+        const dA = parseFloat(document.getElementById('k_distA').value) || 0;
+        const dB = parseFloat(document.getElementById('k_distB').value) || 0;
+        const m = parseFloat(document.getElementById('k_mnoznik').value) || 1;
+        const o = parseFloat(document.getElementById('k_ogien').value) || 1;
+        const orderId = document.getElementById('k_id').value || "#BRAK";
+
+        const paidDist = getPaidDistance(dA, dB);
+        const realDist = dA + dB;
+
+        if (dA <= LEG_LIMIT && dB <= LEG_LIMIT) {
+            return alert("Żaden z odcinków nie przekracza limitu 6km. Brak kagańca.");
+        }
+
+        const nalezna = (BAZA + realDist) * m * o;
+        const wyplacona = (BAZA + paidDist) * m * o;
+        const roznica = nalezna - wyplacona;
+        const resFixed = roznica.toFixed(2);
+
+        document.getElementById('val_roznica').innerText = resFixed + " zł";
+        
+        let msg = `Korekta dystansu ${orderId}.\n`;
+        msg += `Faktyczna trasa: ${(realDist).toFixed(2)} km (A: ${dA} + B: ${dB}).\n`;
+        msg += `System naliczył tylko: ${paidDist.toFixed(2)} km (limit 6km na odcinek).\n`;
+        msg += `Proszę o wyrównanie za ${(realDist - paidDist).toFixed(2)} km. Kwota: ${resFixed} zł.`;
+
+        document.getElementById('msg_text').innerText = msg;
+        document.getElementById('res_kaganiec').style.display = 'block';
+        
+        saveToHistory('kaganiec', { orderId: orderId, ogien: o, m: m, distA: dA, distB: dB, res: resFixed });
+    }
+
+    function transferToKorekta() {
+        document.getElementById('k_distA').value = document.getElementById('m_distA').value;
+        document.getElementById('k_distB').value = document.getElementById('m_distB').value;
+        document.getElementById('k_mnoznik').value = document.getElementById('val_mnoznik').innerText;
+        document.getElementById('k_ogien').value = document.getElementById('m_ogien').value;
+        openTab('kaganiec-tab', 'tab-k');
+    }
+
+    function copyMsg() {
+        navigator.clipboard.writeText(document.getElementById('msg_text').innerText);
+        alert("Skopiowano treść wniosku do schowka!");
+    }
+
+    function saveToHistory(type, data) {
+        const entry = { id: Date.now(), date: new Date().toLocaleString('pl-PL'), type, ...data };
+        history.unshift(entry);
+        if(history.length > 15) history.pop();
+        localStorage.setItem('glovo_hist', JSON.stringify(history));
+    }
+
+    function renderHistory() {
+        const list = document.getElementById('history-list');
+        list.innerHTML = history.length === 0 ? '<div style="text-align:center; color:var(--text-dim); margin-top:30px; font-size:0.85rem;">Brak historii obliczeń</div>' : '';
+        history.forEach(item => {
+            const div = document.createElement('div');
+            div.className = `hist-item`;
+            const result = item.type === 'mnoznik' ? `Mnożnik: ${item.res}` : `Dopłata: +${item.res} zł`;
+            div.innerHTML = `
+                <div class="hist-header"><span>${item.date}</span></div>
+                <div class="hist-main">${result}</div>
+                <div style="font-size:0.75rem; color:var(--accent-yellow); margin-top:2px;">${item.type === 'mnoznik' ? 'Obliczenie mnożnika' : 'Korekta ' + item.orderId}</div>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    function clearHistory() { 
+        if(confirm('Czy na pewno chcesz wyczyścić historię?')) { 
+            history = []; 
+            localStorage.setItem('glovo_hist', '[]'); 
+            renderHistory(); 
+        } 
+    }
+
+    async function handleOCR(input) {
+        if (!input.files[0]) return;
+        const status = document.getElementById('ocr_status');
+        status.innerText = "⏳ Skanowanie OCR w toku...";
+        try {
+            const worker = await Tesseract.createWorker('pol');
+            const result = await worker.recognize(input.files[0]);
+            console.log(result.data.text);
+            status.innerText = "✅ Skanowanie zakończone pomyślnie";
+            await worker.terminate();
+        } catch (e) { 
+            status.innerText = "❌ Wystąpił błąd OCR"; 
+        }
+    }
+</script>
 </body>
 </html>
